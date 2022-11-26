@@ -1,38 +1,27 @@
-pipeline {   
-  agent{      
-    node { label 'slavefordocker'}     
-  }  
-  environment {     
-    DOCKERHUB_CREDENTIALS= credentials('dockerhub')     
-  }    
-  stages {         
-    stage("Git Checkout"){           
-      steps{                
-	git credentialsId: 'github', url: 'https://github.com/gowthamselva/test'                 
-	echo 'Git Checkout Completed'            
-      }        
-    }
-    stage('Build Docker Image') {         
-      steps{                
-	sh 'sudo docker build -t gowtham2mahtwog/test:$BUILD_NUMBER .'           
-        echo 'Build Image Completed'                
-      }           
-    }
-    stage('Login to Docker Hub') {         
-      steps{                            
-	sh 'echo $DOCKERHUB_CREDENTIALS_PSW | sudo docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'                 
-	echo 'Login Completed'                
-      }           
-    }               
-    stage('Push Image to Docker Hub') {         
-      steps{                            
-	sh 'sudo docker push gowtham2mahtwog/test:$BUILD_NUMBER'                 echo 'Push Image Completed'       
-      }           
-    }      
-  } //stages 
-  post{
-    always {  
-      sh 'docker logout'           
-    }      
-  }  
-} //pipeline
+pipeline{
+  agent any
+  stages{
+      stage("Git clone"){
+          steps{
+              git branch: 'main', credentialsId: 'github', url: 'https://github.com/gowthamselva/test'
+          }
+      }
+        stage('Building image'){
+            steps{
+                script{
+                    sh 'docker build -t gowtham2mahtwog/demo .'
+                }
+            }
+        }
+        stage("push to dockerhub"){
+            steps{
+                script{
+                    withCredentials([string(credentialsId: 'dockerhubpwd', variable: 'dockerhubpwd')]) {
+                    sh 'docker login -u gowtham2mahtwog -p ${dockerhubpwd}'
+}
+                    sh 'docker push gowtham2mahtwog/demo'
+                }
+            }
+        }
+  }
+}

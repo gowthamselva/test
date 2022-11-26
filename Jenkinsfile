@@ -1,6 +1,6 @@
 pipeline {
   environment {
-    imagename = "gowtham2mahtwog/pythonapp"
+    imagename = "gowtham2mahtwog/test"
     registryCredential = 'dockerhub'
     dockerImage = ''
   }

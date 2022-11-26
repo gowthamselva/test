@@ -1,41 +1,38 @@
-pipeline {
-  environment {
-    imagename = "gowtham2mahtwog/test"
-    registryCredential = 'dockerhub'
-    dockerImage = ''
-  }
-  agent any
-  stages {
-    stage('Cloning Git') {
-      steps {
-        git([url: 'https://github.com/gowthamselva/test', branch: 'main', credentialsId: 'github'])
-
-      }
+pipeline {   
+  agent{      
+    node { label 'slavefordocker'}     
+  }  
+  environment {     
+    DOCKERHUB_CREDENTIALS= credentials('dockerhub')     
+  }    
+  stages {         
+    stage("Git Checkout"){           
+      steps{                
+	git credentialsId: 'github', url: 'https://github.com/gowthamselva/test'                 
+	echo 'Git Checkout Completed'            
+      }        
     }
-    stage('Building image') {
-      steps{
-        script {
-          dockerImage = docker.build imagename
-        }
-      }
+    stage('Build Docker Image') {         
+      steps{                
+	sh 'sudo docker build -t gowtham2mahtwog/test:$BUILD_NUMBER .'           
+        echo 'Build Image Completed'                
+      }           
     }
-    stage('Deploy Image') {
-      steps{
-        script {
-          docker.withRegistry( '', registryCredential ) {
-            dockerImage.push("$BUILD_NUMBER")
-             dockerImage.push('latest')
-
-          }
-        }
-      }
-    }
-    stage('Remove Unused docker image') {
-      steps{
-        sh "docker rmi $imagename:$BUILD_NUMBER"
-         sh "docker rmi $imagename:latest"
-
-      }
-    }
-  }
-}
+    stage('Login to Docker Hub') {         
+      steps{                            
+	sh 'echo $DOCKERHUB_CREDENTIALS_PSW | sudo docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'                 
+	echo 'Login Completed'                
+      }           
+    }               
+    stage('Push Image to Docker Hub') {         
+      steps{                            
+	sh 'sudo docker push gowtham2mahtwog/test:$BUILD_NUMBER'                 echo 'Push Image Completed'       
+      }           
+    }      
+  } //stages 
+  post{
+    always {  
+      sh 'docker logout'           
+    }      
+  }  
+} //pipeline
